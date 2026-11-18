@@ -1,7 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+*{
+  box-sizing: border-box
+}
 
-.App{
-    text-align: left;
+body{
+  padding: 0;
+  margin: 0;
+}
+
+.active{
+  color: blue
 }

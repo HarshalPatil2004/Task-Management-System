@@ -1,109 +1,73 @@
-### Simple Library Management System
-- user can add, delete, update books
-- user can add, delete, update borrowers
-- user can add, update authors
-- user can borrow books
-- user can return books
+# TaskiFy
 
+TaskiFy is a task management app built with React and Vite. Users must register and sign in before accessing the workspace. Tasks are stored by the backend and scoped to their authenticated owner.
 
-## Views:
-- # Home
-    Library(Database) Information is available here. In case of data not fetched and refreshed properly, force refresh button is given in the page.
+## Run locally
 
-    ![alt text](../DemoPreview/image.png)
+The backend and frontend run in separate terminals.
 
+### 1. Configure and start the backend
 
-- # New
+In the repository root:
 
-    ![alt text](../DemoPreview/image-1.png)
-    
-    - Add Book
-        User can add book with the following fields:(in case of author is not in Author schema, author will automatically get added with required fields only. later user may update the secondary fields)
+```powershell
+cd backend\backend
+npm install
+Copy-Item .env.example .env
+```
 
-        ![alt text](../DemoPreview/image-5.png)
-        ![alt text](../DemoPreview/image-6.png)
+Edit `backend\backend\.env` and set:
 
-    - Add Borrower
-        User can add borrower with the following fields:
+- `MONGO_URI` to your MongoDB connection string.
+- `JWT_SECRET` to a unique random value of at least 32 bytes.
+- `CLIENT_URL` to the frontend origin, normally `http://localhost:5173`.
+- `PORT` to the API port, normally `4000`.
 
-        ![alt text](../DemoPreview/image-7.png)
+Generate a secret in the backend terminal with:
 
-    - Add Author
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-        User can add author with the following fields:(in case books are not it books schema, books will automatically get added with required fields only. later user may update the secondary fields)
+Paste the generated value after `JWT_SECRET=` in `.env`. Keep `.env` private and do not commit it.
 
-        ![alt text](../DemoPreview/image-8.png)
+Start the API:
 
+```powershell
+npm run server
+```
 
-- # Update
-    - Update Book
-        User can enter partial case insensitive book name or category and update the book with the following fields:
+The server waits for MongoDB before listening. Keep this terminal running.
 
-        ![alt text](../DemoPreview/image-9.png)
+### 2. Start the frontend
 
-        on selecting the book from the booklist, user can update the book with the following fields:
+In a second terminal from the repository root:
 
-        ![alt text](../DemoPreview/image-10.png)
+```powershell
+cd Frontend
+npm install
+npm run dev
+```
 
-    - Update Borrower
-        User can enter partial case insensitive borrower name and update the borrower with the following fields:
+Open the local URL printed by Vite, normally `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:4000`. If you change the API port, update the proxy in `Frontend\vite.config.js`.
 
-        ![alt text](../DemoPreview/image-11.png)
+For a deployed frontend, set `VITE_API_URL` to the backend origin (for example, `https://api.example.com`, without `/api`) when building the frontend. Set the backend `CLIENT_URL` to the exact deployed frontend origin. The production session cookie is Secure and requires HTTPS.
 
-        on selecting the borrower from the borrower list, user can update the borrower with the following fields:
+## Authentication and task API
 
-        ![alt text](../DemoPreview/image-12.png)
+- `POST /api/auth/register` stores a `MEMBER` account in MongoDB but does not sign it in. Register once, then use the same email and password to sign in on later visits. If the email is already registered, the app takes the user to sign in instead of creating another account.
+- `POST /api/auth/login` validates credentials and sets an HttpOnly session cookie.
+- `GET /api/auth/me` restores the current session; `POST /api/auth/logout` clears it.
+- Task and dashboard endpoints require a valid session. The backend sets task ownership and limits task operations and statistics to the signed-in user.
+- Passwords are hashed by the backend. The frontend does not store or log passwords or JWTs.
 
-    - Update Author
-        User can enter partial case insensitive author name and update the author with the following fields:
+If the browser reports a Vite `502 Bad Gateway` for an `/api` request, check that the backend is running, MongoDB connected successfully, and the backend is listening on the port configured in the Vite proxy.
 
-        ![alt text](../DemoPreview/image-13.png)
+## Validation
 
-        on selecting the author from the author list, user can update the author with the following fields:
+From `Frontend`:
 
-        ![alt text](../DemoPreview/image-14.png)
-
-- # Delete
-    - Delete Book
-        User can enter partial case insensitive book name or category and delete the book with the following fields:
-
-        ![alt text](../DemoPreview/image-16.png)
-
-        on selecting the book from the booklist, user can re-check the values once, then by typing "delete" and pressing the Confirm Delete to delete the book from DB:
-
-        ![alt text](../DemoPreview/image-15.png)
-
-    - Delete Borrower
-        Same components codes have been used for delete borrower as well.
-
-- # Book Checkout
-    - Initially all books have borrower field null means it is not borrowed by any user. So, user can borrow the book by entering the partial case insensitive book name or category and partial case insensitive borrower name:
-
-        ![alt text](../DemoPreview/image-17.png)
-
-        on selecting the book from the booklist, user can re-check the values once, then by typing "checkout" and pressing the Checkout button to borrow the book:
-
-        ![alt text](../DemoPreview/image-18.png)
-
-        There is a ""Save as PDF" button to save the checkout details in the PDF format. The PDF will be saved in the root directory with the name `checkout-${book.title}.pdf`
-        ![alt text](../DemoPreview/image-19.png)
-
-- # Book Checkin
-    - Initially, all books have borrower field null means it is not borrowed by any user. The logic here is written like, the books will be shown in the booklist only if the book has some borrower (the book is checked out)
-    ![alt text](../DemoPreview/image-20.png)
-
-    User can verify the readOnly fields and then by typing "checkin" and pressing the Checkin button to return the book:
-    ![alt text](../DemoPreview/image-21.png)
-
-
-# Note:
- - All the "Go Back Home" or "Go Home" buttons works perfectly. You can even click the "Library Manager" text on the header to go to the home page.
- - The "Save as PDF" button is available only in the Book Checkout page.
- - Its not explicitly TypeSafe
- - The code may not be very optimal but it is working fine.
- - `books` to `authors` and `books` to `borrowers` are one-to-one relationship
- - `authors` to `books` and `borrowers` to `books` are one-to-many relationship
- - New components have been added like show all books, show all checked out bookss, show alll avallable books, etc. These are not in nav bar but clicking different Status components from the home page will take you to the respective pages. 
-
-# Contributed by:
- - Sayak Ghorai [(github/sayakghorai34)](https://github.com/sayakghorai34), 29th May 2024 
+```powershell
+npm run build
+npm run lint
+```
